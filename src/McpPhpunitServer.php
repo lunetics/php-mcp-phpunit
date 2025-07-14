@@ -8,6 +8,7 @@ use PhpMcp\Phpunit\Parsers\JunitXmlParser;
 use PhpMcp\Phpunit\Parsers\TestdoxParser;
 use PhpMcp\Server\Attributes\McpTool;
 use PhpMcp\Server\Server;
+use PhpMcp\Server\Transports\StdioServerTransport;
 
 class McpPhpunitServer
 {
@@ -31,9 +32,26 @@ class McpPhpunitServer
     public function start(): void
     {
         $server = Server::make()
-            ->discover();
+            ->withServerInfo('php-mcp-phpunit', '1.0.0')
+            ->withTool(fn (string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+            ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+            ->withTool(fn (string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+            ->withTool(fn () => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+            ->build();
 
-        $server->run('stdio');
+        $transport = new StdioServerTransport();
+        $server->listen($transport);
+    }
+
+    public function getServer(): Server
+    {
+        return Server::make()
+            ->withServerInfo('php-mcp-phpunit', '1.0.0')
+            ->withTool(fn (string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+            ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+            ->withTool(fn (string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+            ->withTool(fn () => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+            ->build();
     }
 
     #[McpTool(

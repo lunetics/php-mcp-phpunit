@@ -26,6 +26,7 @@ return (new PhpCsFixer\Config())
         'ordered_imports' => true,
         'php_unit_strict' => true,
         'phpdoc_order' => true,
+        'phpdoc_to_comment' => false,
         'semicolon_after_instruction' => true,
         'strict_comparison' => true,
         'strict_param' => true,

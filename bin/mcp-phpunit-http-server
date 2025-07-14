@@ -1,0 +1,106 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Find the autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',  // Development/local installation
+    __DIR__ . '/../../../autoload.php',   // Global Composer installation
+];
+
+$autoloaderFound = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (file_exists($autoloadPath)) {
+        require_once $autoloadPath;
+        $autoloaderFound = true;
+        break;
+    }
+}
+
+if (!$autoloaderFound) {
+    fwrite(STDERR, "Error: Composer autoloader not found. Please run 'composer install'.\n");
+    exit(1);
+}
+
+use PhpMcp\Phpunit\McpPhpunitServer;
+use PhpMcp\Phpunit\PhpunitExecutor;
+use PhpMcp\Server\Transports\StreamableHttpServerTransport;
+use PhpMcp\Server\Server;
+
+// Parse command line options
+$options = getopt('h:p:', ['help', 'host:', 'port:', 'json']);
+
+if (isset($options['help'])) {
+    echo "Usage: {$argv[0]} [OPTIONS]\n";
+    echo "\n";
+    echo "Options:\n";
+    echo "  -h, --host HOST     Host to listen on (default: 0.0.0.0)\n";
+    echo "  -p, --port PORT     Port to listen on (default: 8080)\n";
+    echo "  --json              Enable JSON response mode (faster for quick tools)\n";
+    echo "  --help              Show this help message\n";
+    echo "\n";
+    echo "Endpoints:\n";
+    echo "  GET  /mcp           SSE endpoint (with Accept: text/event-stream header)\n";
+    echo "  POST /mcp           HTTP endpoint for sending JSON requests\n";
+    echo "\n";
+    echo "Usage with Docker:\n";
+    echo "  docker run -p 8080:8080 php-mcp-phpunit --http\n";
+    echo "\n";
+    echo "Client Configuration:\n";
+    echo "  {\n";
+    echo "    \"mcpServers\": {\n";
+    echo "      \"phpunit\": {\n";
+    echo "        \"url\": \"http://localhost:8080/mcp\"\n";
+    echo "      }\n";
+    echo "    }\n";
+    echo "  }\n";
+    echo "\n";
+    exit(0);
+}
+
+$host = $options['h'] ?? $options['host'] ?? '0.0.0.0';
+$port = (int) ($options['p'] ?? $options['port'] ?? 8080);
+$jsonMode = isset($options['json']);
+
+try {
+    echo "MCP PHPUnit HTTP Server starting...\n";
+    echo "Transport: StreamableHttpServerTransport\n";
+    echo "Listening on: http://{$host}:{$port}\n";
+    echo "MCP Endpoint: http://{$host}:{$port}/mcp\n";
+    echo "Response Mode: " . ($jsonMode ? "JSON (immediate)" : "SSE (streaming)") . "\n";
+    echo "Press Ctrl+C to stop\n\n";
+
+    // Create PHPUnit executor
+    $executor = new PhpunitExecutor(getcwd());
+    
+    // Create MCP server instance  
+    $mcpServer = new McpPhpunitServer($executor);
+
+    // Create the server with manual tool registration
+    $server = Server::make()
+        ->withServerInfo('php-mcp-phpunit', '1.0.0')
+        ->withTool(fn (string $path = '', array $phpunit_args = []) => $mcpServer->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+        ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $mcpServer->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+        ->withTool(fn (string $path = '') => $mcpServer->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+        ->withTool(fn () => $mcpServer->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+        ->build();
+
+    // Create StreamableHttpServerTransport
+    $transport = new StreamableHttpServerTransport(
+        host: $host,
+        port: $port,
+        mcpPath: 'mcp',
+        enableJsonResponse: $jsonMode
+    );
+
+    // Start listening (this blocks)
+    $server->listen($transport);
+
+    echo "Server stopped gracefully.\n";
+
+} catch (Throwable $e) {
+    fwrite(STDERR, "Error starting MCP PHPUnit HTTP server: " . $e->getMessage() . "\n");
+    fwrite(STDERR, "File: " . $e->getFile() . ":" . $e->getLine() . "\n");
+    exit(1);
+}

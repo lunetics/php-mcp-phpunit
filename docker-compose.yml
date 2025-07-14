@@ -10,7 +10,8 @@ services:
     working_dir: /app
     stdin_open: true
     tty: true
-    command: tail -f /dev/null  # Keep container running
+    # Default: starts MCP server (via entrypoint)
+    # Use: docker-compose run php-mcp-phpunit --shell for interactive mode
 
   php-dev:
     build:
