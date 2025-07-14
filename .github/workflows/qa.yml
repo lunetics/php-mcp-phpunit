@@ -92,8 +92,13 @@ jobs:
           
       - name: Test MCP Server Binary
         run: |
-          docker run --rm php-mcp-phpunit php bin/mcp-phpunit-server --help || true
-          echo "✅ Docker: MCP server binary is executable"
+          # Test that the MCP server binary exists and is executable
+          docker run --rm php-mcp-phpunit test -x bin/mcp-phpunit-server
+          # Test that PHP can parse the server file without executing it
+          docker run --rm php-mcp-phpunit php -l bin/mcp-phpunit-server
+          # Test MCP server instantiation without starting stdio transport
+          docker run --rm php-mcp-phpunit php -r "require 'vendor/autoload.php'; new PhpMcp\\Phpunit\\McpPhpunitServer(new PhpMcp\\Phpunit\\PhpunitExecutor(getcwd())); echo 'MCP server can be instantiated';"
+          echo "✅ Docker: MCP server binary is executable and syntactically valid"
 
   compatibility:
     name: PHPUnit Compatibility
