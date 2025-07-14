@@ -10,6 +10,52 @@ A Model Context Protocol (MCP) server that provides structured PHPUnit test exec
 
 This MCP server wraps PHPUnit functionality and converts raw test output into structured, semantic JSON that's optimized for LLM consumption. It combines PHPUnit's JUnit XML output with TestDox descriptions to provide both technical details and human-readable context.
 
+## Quick Start with Claude
+
+### 🚀 Fastest Setup (Local Development)
+
+1. **Install**:
+   ```bash
+   composer require php-mcp/phpunit
+   ```
+
+2. **Configure Claude Desktop** (`claude_desktop_config.json`):
+   ```json
+   {
+     "mcpServers": {
+       "phpunit": {
+         "command": "./vendor/bin/mcp-phpunit-server",
+         "args": []
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop** and ask:
+   ```
+   Can you run the PHPUnit tests for this project?
+   ```
+
+### 🐳 Docker Setup (Production/Remote)
+
+1. **Start HTTP Server**:
+   ```bash
+   docker run -d -p 8080:8080 --name mcp-phpunit php-mcp-phpunit --http
+   ```
+
+2. **Configure Claude Desktop**:
+   ```json
+   {
+     "mcpServers": {
+       "phpunit": {
+         "url": "http://localhost:8080/mcp"
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop** and test!
+
 ## Features
 
 - 🧪 **4 Essential MCP Tools** for comprehensive test management
@@ -338,7 +384,11 @@ Get PHPUnit version and configuration information.
 
 ## Integration with LLM Clients
 
-### Claude Desktop
+## Claude Integration
+
+> **Note**: This integration works with **Claude Desktop** and **Claude Code**. The Claude web interface does not currently support MCP servers.
+
+### Claude Desktop (Stdio Transport)
 
 Add to your `claude_desktop_config.json`:
 
@@ -353,9 +403,106 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+**Location of config file:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+### Claude Desktop (HTTP Transport)
+
+For Docker or remote server deployments, use HTTP transport:
+
+#### Step 1: Start the HTTP Server
+```bash
+# Local HTTP server
+./bin/mcp-phpunit-http-server --port 8080
+
+# Or with Docker
+docker run -d -p 8080:8080 --name mcp-phpunit php-mcp-phpunit --http
+```
+
+#### Step 2: Configure Claude Desktop
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "phpunit": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+#### Step 3: Restart Claude Desktop
+Restart Claude Desktop application to load the new configuration.
+
+### Claude Web/API (HTTP Transport Only)
+
+For Claude web interface or API integration, you must use HTTP transport:
+
+```bash
+# Start server accessible from network
+./bin/mcp-phpunit-http-server --host 0.0.0.0 --port 8080
+
+# Configure your MCP client with:
+# URL: http://your-server:8080/mcp
+```
+
+### Testing the Integration
+
+Once configured, you can test the integration in Claude:
+
+**👤 You:** "Can you run the PHPUnit tests for this project?"
+
+**🤖 Claude:** "I'll run the PHPUnit tests for you using the MCP PHPUnit server."
+
+*[Claude uses the `run_tests` tool]*
+
+**🤖 Claude:** "✅ **Test Results**: 42/45 tests passed (2 failed, 1 skipped) - 93.3% success rate in 1.234s
+
+**Failed Tests:**
+- `UserTest::testEmailValidation` - Failed asserting that false is true
+- `ProductTest::testPriceCalculation` - Division by zero error
+
+Would you like me to run the specific failing tests with more detail or help debug the issues?"
+
+**Available Claude Commands:**
+- "Run all tests" → Uses `run_tests`
+- "Run tests in the User directory" → Uses `run_tests` with path
+- "Run only the UserTest::testEmailValidation test" → Uses `run_specific_test`
+- "List all available tests" → Uses `list_tests`
+- "Show PHPUnit configuration" → Uses `get_configuration`
+
+### Troubleshooting Claude Integration
+
+#### Stdio Transport Issues
+```bash
+# Test server manually
+echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}},"id":1}' | ./bin/mcp-phpunit-server
+```
+
+#### HTTP Transport Issues
+```bash
+# Test server is running
+curl -H "Accept: text/event-stream" -H "Mcp-Session-Id: test" http://localhost:8080/mcp
+
+# Check server logs
+docker logs mcp-phpunit  # if using Docker
+```
+
+#### Common Issues
+1. **Config file not found**: Ensure Claude Desktop config file exists in correct location
+2. **Permission denied**: Make sure binary is executable (`chmod +x bin/mcp-phpunit-server`)
+3. **Port conflicts**: Use different port if 8080 is occupied (`--port 8081`)
+4. **Docker not accessible**: Ensure Docker container is running and port is mapped
+
 ### Other MCP Clients
 
-The server uses the standard MCP stdio transport and is compatible with any MCP client that supports the `2024-11-05` protocol version.
+Both transports are compatible with any MCP client that supports the `2024-11-05` protocol version:
+
+**Stdio Transport**: Standard process-based communication
+**HTTP Transport**: RESTful API with Server-Sent Events for streaming
 
 ## Development
 
