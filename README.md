@@ -80,9 +80,9 @@ docker run -p 8080:8080 php-mcp-phpunit --http
 ./bin/mcp-phpunit-http-server --host 0.0.0.0 --port 9000 --json
 ```
 
-**HTTP Transport Endpoints:**
-- `GET /mcp/sse` - Server-Sent Events endpoint for streaming responses
-- `POST /mcp/message` - HTTP endpoint for sending requests
+**HTTP Transport Endpoint:**
+- `GET /mcp` - Server-Sent Events endpoint (requires `Accept: text/event-stream` header)
+- `POST /mcp` - HTTP endpoint for sending JSON requests (requires `Content-Type: application/json`)
 
 ### Transport Options
 
@@ -115,7 +115,7 @@ docker run -p 8080:8080 php-mcp-phpunit --http
 {
   "mcpServers": {
     "phpunit": {
-      "url": "http://localhost:8080/mcp/sse"
+      "url": "http://localhost:8080/mcp"
     }
   }
 }

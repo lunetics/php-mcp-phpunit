@@ -41,8 +41,8 @@ if (isset($options['help'])) {
     echo "  --help              Show this help message\n";
     echo "\n";
     echo "Endpoints:\n";
-    echo "  GET  /mcp/sse       SSE endpoint for streaming responses\n";
-    echo "  POST /mcp/message   HTTP endpoint for sending requests\n";
+    echo "  GET  /mcp           SSE endpoint (with Accept: text/event-stream header)\n";
+    echo "  POST /mcp           HTTP endpoint for sending JSON requests\n";
     echo "\n";
     echo "Usage with Docker:\n";
     echo "  docker run -p 8080:8080 php-mcp-phpunit --http\n";
@@ -51,7 +51,7 @@ if (isset($options['help'])) {
     echo "  {\n";
     echo "    \"mcpServers\": {\n";
     echo "      \"phpunit\": {\n";
-    echo "        \"url\": \"http://localhost:8080/mcp/sse\"\n";
+    echo "        \"url\": \"http://localhost:8080/mcp\"\n";
     echo "      }\n";
     echo "    }\n";
     echo "  }\n";
@@ -67,8 +67,7 @@ try {
     echo "MCP PHPUnit HTTP Server starting...\n";
     echo "Transport: StreamableHttpServerTransport\n";
     echo "Listening on: http://{$host}:{$port}\n";
-    echo "SSE Endpoint: http://{$host}:{$port}/mcp/sse\n";
-    echo "POST Endpoint: http://{$host}:{$port}/mcp/message\n";
+    echo "MCP Endpoint: http://{$host}:{$port}/mcp\n";
     echo "Response Mode: " . ($jsonMode ? "JSON (immediate)" : "SSE (streaming)") . "\n";
     echo "Press Ctrl+C to stop\n\n";
 
@@ -81,10 +80,10 @@ try {
     // Create the server with manual tool registration
     $server = Server::make()
         ->withServerInfo('php-mcp-phpunit', '1.0.0')
-        ->withTool(fn(string $path = '', array $phpunit_args = []) => $mcpServer->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
-        ->withTool(fn(string $filter, string $path = '', array $phpunit_args = []) => $mcpServer->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
-        ->withTool(fn(string $path = '') => $mcpServer->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
-        ->withTool(fn() => $mcpServer->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+        ->withTool(fn (string $path = '', array $phpunit_args = []) => $mcpServer->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+        ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $mcpServer->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+        ->withTool(fn (string $path = '') => $mcpServer->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+        ->withTool(fn () => $mcpServer->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
         ->build();
 
     // Create StreamableHttpServerTransport
