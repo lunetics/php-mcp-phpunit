@@ -44,8 +44,8 @@ jobs:
         
       - name: PHP Lint
         run: |
-          find src tests -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
-          if [ $? -eq 0 ]; then echo "✅ PHP Lint: All files passed"; else echo "❌ PHP Lint: Syntax errors found" && exit 1; fi
+          LINT_OUTPUT=$(find src tests -name "*.php" -exec php -l {} \; | grep -v "No syntax errors")
+          if [ -z "$LINT_OUTPUT" ]; then echo "✅ PHP Lint: All files passed"; else echo "❌ PHP Lint: Syntax errors found:"; echo "$LINT_OUTPUT"; exit 1; fi
           
       - name: PHPUnit Tests
         run: |
