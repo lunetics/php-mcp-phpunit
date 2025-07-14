@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  php-mcp-phpunit:
+    build: .
+    container_name: php-mcp-phpunit
+    volumes:
+      - .:/app
+      - /app/vendor  # Anonymous volume for vendor directory
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null  # Keep container running
+
+  php-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: php-mcp-phpunit-dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null

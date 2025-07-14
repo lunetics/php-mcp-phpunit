@@ -1,0 +1,28 @@
+# Composer
+/vendor/
+composer.lock
+
+# PHPUnit
+.phpunit.cache/
+junit.xml
+testdox.txt
+
+# PHP-CS-Fixer
+.php-cs-fixer.cache
+
+# Docker
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+test-mcp-server.php
+test-project/
