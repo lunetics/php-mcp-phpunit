@@ -28,7 +28,7 @@ RUN composer install --no-dev --optimize-autoloader
 COPY . .
 
 # Make executable files executable
-RUN chmod +x bin/mcp-phpunit-server docker-entrypoint.sh
+RUN chmod +x bin/mcp-phpunit-server bin/mcp-phpunit-http-server docker-entrypoint.sh
 
 # Create a non-root user
 RUN useradd -m -u 1000 phpuser && chown -R phpuser:phpuser /app
@@ -37,5 +37,5 @@ USER phpuser
 # Use entrypoint script
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
-# Default command (run tests - MCP server cannot run in Docker)
+# Default command (run tests by default)
 CMD ["--test"]

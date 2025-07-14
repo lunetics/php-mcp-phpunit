@@ -70,6 +70,7 @@ class JunitXmlParser
         $testsuiteNodes = $xpath->query('//testsuite[@file]');
 
         foreach ($testsuiteNodes as $node) {
+            /** @var \DOMElement $node */
             $testsuites[] = [
                 'name'       => $node->getAttribute('name'),
                 'file'       => $node->getAttribute('file'),
@@ -90,9 +91,11 @@ class JunitXmlParser
         $failureNodes = $xpath->query('//testcase[failure]');
 
         foreach ($failureNodes as $testcase) {
+            /** @var \DOMElement $testcase */
             $failureNode = $xpath->query('failure', $testcase)->item(0);
 
             if ($failureNode) {
+                /** @var \DOMElement $failureNode */
                 $failures[] = [
                     'test'    => $testcase->getAttribute('class') . '::' . $testcase->getAttribute('name'),
                     'class'   => $testcase->getAttribute('class'),
@@ -115,9 +118,11 @@ class JunitXmlParser
         $errorNodes = $xpath->query('//testcase[error]');
 
         foreach ($errorNodes as $testcase) {
+            /** @var \DOMElement $testcase */
             $errorNode = $xpath->query('error', $testcase)->item(0);
 
             if ($errorNode) {
+                /** @var \DOMElement $errorNode */
                 $errors[] = [
                     'test'    => $testcase->getAttribute('class') . '::' . $testcase->getAttribute('name'),
                     'class'   => $testcase->getAttribute('class'),
@@ -140,6 +145,7 @@ class JunitXmlParser
         $skippedNodes = $xpath->query('//testcase[skipped]');
 
         foreach ($skippedNodes as $testcase) {
+            /** @var \DOMElement $testcase */
             $skippedNode = $xpath->query('skipped', $testcase)->item(0);
 
             $skipped[] = [

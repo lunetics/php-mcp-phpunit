@@ -33,10 +33,10 @@ class McpPhpunitServer
     {
         $server = Server::make()
             ->withServerInfo('php-mcp-phpunit', '1.0.0')
-            ->withTool(fn(string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
-            ->withTool(fn(string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
-            ->withTool(fn(string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
-            ->withTool(fn() => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+            ->withTool(fn (string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+            ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+            ->withTool(fn (string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+            ->withTool(fn () => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
             ->build();
 
         $transport = new StdioServerTransport();
@@ -47,10 +47,10 @@ class McpPhpunitServer
     {
         return Server::make()
             ->withServerInfo('php-mcp-phpunit', '1.0.0')
-            ->withTool(fn(string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
-            ->withTool(fn(string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
-            ->withTool(fn(string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
-            ->withTool(fn() => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
+            ->withTool(fn (string $path = '', array $phpunit_args = []) => $this->runTests($path, $phpunit_args), 'run_tests', 'Execute PHPUnit tests and return structured results with semantic information')
+            ->withTool(fn (string $filter, string $path = '', array $phpunit_args = []) => $this->runSpecificTest($filter, $path, $phpunit_args), 'run_specific_test', 'Execute a specific test method, class, or filter pattern with detailed output')
+            ->withTool(fn (string $path = '') => $this->listTests($path), 'list_tests', 'List all available tests in the specified path without executing them')
+            ->withTool(fn () => $this->getConfiguration(), 'get_configuration', 'Get PHPUnit version and configuration information')
             ->build();
     }
 

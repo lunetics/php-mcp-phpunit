@@ -15,7 +15,8 @@ This MCP server wraps PHPUnit functionality and converts raw test output into st
 - 🧪 **4 Essential MCP Tools** for comprehensive test management
 - 📊 **Structured Output** with pass/fail statistics and performance metrics
 - 🔍 **Semantic Context** using PHPUnit TestDox for test descriptions
-- ⚡ **Docker Support** for easy deployment and testing
+- 🚀 **Dual Transport Support** - Stdio (local) and HTTP (Docker/remote)
+- ⚡ **Full Docker Compatibility** via StreamableHttpServerTransport
 - 🎯 **LLM-Optimized** JSON responses with human-readable summaries
 - 🛡️ **Error Handling** with graceful degradation and informative messages
 
@@ -34,42 +35,95 @@ This MCP server wraps PHPUnit functionality and converts raw test output into st
 composer require php-mcp/phpunit
 ```
 
-### Using Docker (Development Environment Only)
-
-⚠️ **Important**: Docker can only be used for development and testing. For MCP integration, you must install PHP locally.
+### Using Docker
 
 ```bash
 git clone https://github.com/php-mcp/phpunit.git
 cd phpunit
-docker-compose up -d
-docker-compose exec -T php-dev composer install
 
-# Docker usage is limited to:
-# - Development and testing
-# - Running PHPUnit tests
-# - Code quality checks
-# NOT for running the MCP server
+# Build the image
+docker build -t php-mcp-phpunit .
+
+# Run MCP server with HTTP transport
+docker run -p 8080:8080 php-mcp-phpunit --http
+
+# Or run development/testing commands
+docker run --rm php-mcp-phpunit --test
+docker run --rm php-mcp-phpunit --shell
 ```
+
+**Docker Support:**
+- ✅ **MCP Server**: Via HTTP transport (`--http`)
+- ✅ **Development**: Interactive shell (`--shell`) 
+- ✅ **Testing**: Run PHPUnit tests (`--test`)
+- ✅ **CI/CD**: Automated testing and quality checks
 
 ## Usage
 
 ### Starting the MCP Server
 
+#### Option 1: Stdio Transport (Local Installation)
 ```bash
-# Local installation (REQUIRED for MCP integration)
+# Local installation with stdio transport
 ./bin/mcp-phpunit-server
 ```
 
-### ⚠️ Docker Limitation
+#### Option 2: HTTP Transport (Docker Compatible)
+```bash
+# Local HTTP server
+./bin/mcp-phpunit-http-server
 
-**MCP servers require stdio transport** and cannot run inside Docker containers for MCP client integration. Docker is only suitable for:
-- Development and testing
-- Running PHPUnit tests
-- Code quality checks
+# Or with Docker
+docker run -p 8080:8080 php-mcp-phpunit --http
 
-### Alternatives for Docker Environments
+# Custom host and port
+./bin/mcp-phpunit-http-server --host 0.0.0.0 --port 9000 --json
+```
 
-If you need to use the MCP server in an environment where local PHP installation isn't possible:
+**HTTP Transport Endpoints:**
+- `GET /mcp/sse` - Server-Sent Events endpoint for streaming responses
+- `POST /mcp/message` - HTTP endpoint for sending requests
+
+### Transport Options
+
+#### Stdio Transport
+- **Best for**: Local development, IDE integration, Claude Desktop
+- **Requirements**: Direct process access, no network needed
+- **Limitations**: Cannot run in Docker containers
+
+#### HTTP Transport  
+- **Best for**: Docker deployments, remote servers, cloud environments
+- **Requirements**: Network access to HTTP endpoints
+- **Benefits**: Works in any environment, Docker compatible
+
+### MCP Client Configuration
+
+#### For Stdio Transport (Claude Desktop)
+```json
+{
+  "mcpServers": {
+    "phpunit": {
+      "command": "/path/to/bin/mcp-phpunit-server",
+      "args": []
+    }
+  }
+}
+```
+
+#### For HTTP Transport (Any MCP Client)
+```json
+{
+  "mcpServers": {
+    "phpunit": {
+      "url": "http://localhost:8080/mcp/sse"
+    }
+  }
+}
+```
+
+### Alternatives for Non-Docker Environments
+
+If you need to use the MCP server but prefer not to use Docker, here are alternative approaches:
 
 #### Option 1: Host PHP Installation
 ```bash
