@@ -34,13 +34,21 @@ This MCP server wraps PHPUnit functionality and converts raw test output into st
 composer require php-mcp/phpunit
 ```
 
-### Using Docker (Recommended for Development)
+### Using Docker (Development Environment Only)
+
+⚠️ **Important**: Docker can only be used for development and testing. For MCP integration, you must install PHP locally.
 
 ```bash
 git clone https://github.com/php-mcp/phpunit.git
 cd phpunit
 docker-compose up -d
 docker-compose exec -T php-dev composer install
+
+# Docker usage is limited to:
+# - Development and testing
+# - Running PHPUnit tests
+# - Code quality checks
+# NOT for running the MCP server
 ```
 
 ## Usage
@@ -48,12 +56,45 @@ docker-compose exec -T php-dev composer install
 ### Starting the MCP Server
 
 ```bash
-# Local installation
+# Local installation (REQUIRED for MCP integration)
 ./bin/mcp-phpunit-server
-
-# Docker
-docker-compose exec php-dev php bin/mcp-phpunit-server
 ```
+
+### ⚠️ Docker Limitation
+
+**MCP servers require stdio transport** and cannot run inside Docker containers for MCP client integration. Docker is only suitable for:
+- Development and testing
+- Running PHPUnit tests
+- Code quality checks
+
+### Alternatives for Docker Environments
+
+If you need to use the MCP server in an environment where local PHP installation isn't possible:
+
+#### Option 1: Host PHP Installation
+```bash
+# Install PHP and Composer on the host system
+sudo apt-get install php8.4-cli php8.4-dom php8.4-xml composer
+
+# Install the MCP server globally
+composer global require php-mcp/phpunit
+
+# Add to PATH
+echo 'export PATH="$HOME/.composer/vendor/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### Option 2: Development Container with Host Mount
+```bash
+# Use Docker for development, run MCP server on host
+docker-compose exec -T php-dev vendor/bin/phpunit  # Testing
+./bin/mcp-phpunit-server  # MCP server runs on host
+```
+
+#### Option 3: Remote Development Environment
+- Use GitHub Codespaces, GitPod, or similar cloud IDEs
+- These provide direct access to the development environment
+- No Docker isolation issues
 
 ### Configuring with Custom PHPUnit Path
 
@@ -270,8 +311,11 @@ The server uses the standard MCP stdio transport and is compatible with any MCP 
 # Local
 vendor/bin/phpunit
 
-# Docker
+# Docker (development)
 docker-compose exec -T php-dev vendor/bin/phpunit
+
+# Docker (production container)
+docker run --rm php-mcp-phpunit --test
 ```
 
 ### Code Quality
@@ -356,11 +400,31 @@ run_tests(phpunit_args: ["--coverage-html", "coverage/"])
 # docker-compose.yml
 version: '3.8'
 services:
-  php-dev:
+  php-mcp-phpunit:
     environment:
       - PHPUNIT_BINARY=vendor/bin/phpunit
       - PHPUNIT_WORKING_DIR=/app
       - PHPUNIT_TIMEOUT=600
+```
+
+### Docker Usage Examples (Development Only)
+
+⚠️ **Remember**: Docker cannot run the MCP server for client integration.
+
+```bash
+# Run tests in development environment
+docker-compose exec -T php-dev vendor/bin/phpunit
+
+# Run code quality checks
+docker-compose exec -T php-dev vendor/bin/phpstan analyze
+docker-compose exec -T php-dev vendor/bin/php-cs-fixer fix --dry-run
+
+# Interactive shell for debugging
+docker-compose exec php-dev bash
+
+# Build and test the container (runs tests by default)
+docker build -t php-mcp-phpunit .
+docker run --rm php-mcp-phpunit
 ```
 
 ## Troubleshooting
@@ -393,14 +457,29 @@ find tests -name "*Test.php"
 
 #### 3. MCP Server Connection Issues
 ```bash
-# Test server connectivity
-docker-compose exec php-dev php -r "echo 'PHP is working';"
+# Verify MCP server binary (local installation required)
+php -l bin/mcp-phpunit-server
 
-# Check server logs
-docker-compose logs php-dev
+# Test PHP installation
+php --version
 
-# Verify MCP server binary
-docker-compose exec php-dev php -l bin/mcp-phpunit-server
+# Check if server can start
+./bin/mcp-phpunit-server &
+ps aux | grep mcp-phpunit-server
+kill %1  # Stop the test server
+```
+
+#### 7. Docker Environment Issues
+```bash
+# Docker is for development only - cannot run MCP server
+# If you see "MCP server not responding" with Docker:
+
+# WRONG: Don't do this
+# docker run php-mcp-phpunit  # Will not work for MCP clients
+
+# CORRECT: Install locally
+composer global require php-mcp/phpunit
+export PATH="$PATH:$HOME/.composer/vendor/bin"
 ```
 
 #### 4. Permission Errors
